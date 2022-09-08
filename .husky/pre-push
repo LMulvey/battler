@@ -1,0 +1,18 @@
+#!/bin/bash
+. "$(dirname "$0")/_/husky.sh"
+
+has_changed () {
+  [[ $(git diff main... --name-only -- ${1} | wc -l) -gt 0 ]]
+}
+
+tsc_check () {
+  if ! has_changed 'src'; then
+    return
+  fi
+
+  yarn tsc 2>&1 | sed 's/^/tsc /'
+}
+
+tsc_check &
+
+wait
