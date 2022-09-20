@@ -1,6 +1,8 @@
 import { type Error } from './error';
 import { type Player } from './player';
 
+export type BattleStatus = 'active' | 'finished' | 'paused' | 'queued';
+
 export type BattleAttackResult = 'attacked' | 'blocked';
 
 export type BattleAttack = {
@@ -18,10 +20,11 @@ export type Battle = {
   id: string;
   players: Player[];
   startTime: number;
+  status: BattleStatus;
 };
 
 export type CreateBattleInput = {
-  players: Player[];
+  players: [Player, Player];
 };
 
 export type CreateBattlePayload = {

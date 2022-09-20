@@ -10,6 +10,7 @@ export type Player = {
   name: string;
   power: number;
   status: PlayerStatus;
+  takeDamage: (damageAmount: number) => void;
 };
 
 export type CreatePlayerInput = {
