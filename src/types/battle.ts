@@ -14,6 +14,13 @@ export type BattleAttack = {
 
 export type BattleAction = BattleAttack;
 
+export type BattleHooks = {
+  onAction?: (action: BattleAction) => void;
+  onPauseBattle?: (battle: Battle) => void;
+  onStartBattle?: (battle: Battle) => void;
+  onStopBattle?: (battle: Battle) => void;
+};
+
 export type Battle = {
   battleLog: BattleAction[];
   endTime: number;
@@ -24,6 +31,7 @@ export type Battle = {
 };
 
 export type CreateBattleInput = {
+  hooks?: BattleHooks;
   players: [Player, Player];
 };
 

@@ -25,6 +25,6 @@
     "lint:eslint": "eslint --fix './**/*.ts' --cache",
     "lint:prettier": "prettier --ignore-path .gitignore --check './**/*.ts'",
     "prepare": "husky install",
-    "test": "NODE_ENV=test jest --watch"
+    "test": "NODE_ENV=test jest --watchAll --verbose"
   }
 }

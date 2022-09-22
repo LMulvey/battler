@@ -1,5 +1,6 @@
 import { v4 } from 'uuid';
 import {
+  type BattleHooks,
   type BattleStatus,
   type Battle,
   type BattleAction,
@@ -24,6 +25,8 @@ export class BattleModel implements Battle {
 
   private readonly defendingPlayer: Player;
 
+  private readonly hooks: BattleHooks;
+
   public constructor(initialData: CreateBattleInput) {
     if (!initialData.players.length) {
       throw new Error('InvalidInput');
@@ -35,17 +38,20 @@ export class BattleModel implements Battle {
     this.startTime = 0;
     this.endTime = 0;
     this.status = 'queued';
+    this.hooks = initialData.hooks ?? {};
     // TODO: determine first player differently
     this.actingPlayer = this.players[0];
     this.defendingPlayer = this.players[1];
   }
 
   private logAction(action: Pick<BattleAction, 'damage' | 'result'>) {
-    this.battleLog.push({
+    const resolvedAction = {
       actor: Object.assign({}, this.actingPlayer),
       recipient: Object.assign({}, this.defendingPlayer),
       ...action,
-    });
+    };
+    this.battleLog.push(resolvedAction);
+    this.hooks.onAction?.(resolvedAction);
   }
 
   private calculateDamage(basePower: number) {
@@ -61,15 +67,23 @@ export class BattleModel implements Battle {
   public startBattle() {
     this.startTime = Date.now();
     this.status = 'active';
+    this.hooks.onStartBattle?.(this);
   }
 
   public pauseBattle() {
     this.status = 'paused';
+    this.hooks.onPauseBattle?.(this);
+  }
+
+  public unPauseBattle() {
+    this.status = 'active';
+    this.hooks.onStartBattle?.(this);
   }
 
   public finishBattle() {
     this.endTime = Date.now();
     this.status = 'finished';
+    this.hooks.onStopBattle?.(this);
   }
 
   public checkStatus() {
