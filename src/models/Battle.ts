@@ -1,5 +1,8 @@
 import { v4 } from 'uuid';
 import {
+  type BattleActionLogItem,
+  type BattleSummaryLogItem,
+  type BattleLogItem,
   type BattleHooks,
   type BattleStatus,
   type Battle,
@@ -9,7 +12,7 @@ import {
 import { type Player } from '@/types/player';
 
 export class BattleModel implements Battle {
-  public battleLog: BattleAction[];
+  public battleLog: BattleLogItem[];
 
   public endTime: number;
 
@@ -21,9 +24,11 @@ export class BattleModel implements Battle {
 
   public status: BattleStatus;
 
-  private readonly actingPlayer: Player;
+  public winner: Player | null;
 
-  private readonly defendingPlayer: Player;
+  private actingPlayer: Player;
+
+  private defendingPlayer: Player;
 
   private readonly hooks: BattleHooks;
 
@@ -39,17 +44,22 @@ export class BattleModel implements Battle {
     this.endTime = 0;
     this.status = 'queued';
     this.hooks = initialData.hooks ?? {};
+    this.winner = null;
+
     // TODO: determine first player differently
     this.actingPlayer = this.players[0];
     this.defendingPlayer = this.players[1];
   }
 
   private logAction(action: Pick<BattleAction, 'damage' | 'result'>) {
-    const resolvedAction = {
+    const resolvedAction: BattleActionLogItem = {
       actor: Object.assign({}, this.actingPlayer),
       recipient: Object.assign({}, this.defendingPlayer),
+      type: 'turn',
       ...action,
     };
+
+    console.log(resolvedAction);
     this.battleLog.push(resolvedAction);
     this.hooks.onAction?.(resolvedAction);
   }
@@ -60,7 +70,7 @@ export class BattleModel implements Battle {
   }
 
   private calculateDefended(basePower: number) {
-    const chance = basePower * (Math.random() * 20);
+    const chance = Math.floor(basePower * (Math.random() * 20));
     return chance % 3 === 0;
   }
 
@@ -83,13 +93,90 @@ export class BattleModel implements Battle {
   public finishBattle() {
     this.endTime = Date.now();
     this.status = 'finished';
+    this.winner =
+      this.players.find((player) => player.status === 'ALIVE') ?? null;
+
+    this.buildStats();
     this.hooks.onStopBattle?.(this);
+  }
+
+  public swapTurns() {
+    const currentActingPlayer = this.actingPlayer;
+    const currentDefendingPlayer = this.defendingPlayer;
+    this.actingPlayer = currentDefendingPlayer;
+    this.defendingPlayer = currentActingPlayer;
   }
 
   public checkStatus() {
     if (this.players.some((player) => player.status === 'DEFEATED')) {
       this.finishBattle();
     }
+  }
+
+  private isBattleActionLogItem(
+    action: BattleLogItem
+  ): action is BattleActionLogItem {
+    return action.type === 'turn';
+  }
+
+  private buildStats() {
+    const battleLogActions = this.battleLog.filter(
+      (action): action is BattleActionLogItem =>
+        this.isBattleActionLogItem(action)
+    );
+    const totalTurns = battleLogActions.length;
+    const totalDamage = battleLogActions.reduce(
+      (accumulator, action) => accumulator + action.damage,
+      0
+    );
+    const blocks = battleLogActions.filter(
+      (action) => action.result === 'blocked'
+    );
+    const totalBlocked = blocks.length;
+    const blocksByPlayer = blocks.reduce<{ [key: string]: number }>(
+      (accumulator, action) => {
+        const player = action.actor.id;
+        if (!accumulator[player]) {
+          accumulator[player] = 0;
+        }
+
+        accumulator[player] += 1;
+        return accumulator;
+      },
+      {}
+    );
+
+    const playerIdWithMostBlocks = Object.keys(blocksByPlayer).reduce(
+      (accumulator, playerId) => {
+        const currentPlayer = blocksByPlayer[playerId];
+        const currentTopPlayer = blocksByPlayer[accumulator];
+
+        if (!currentTopPlayer) {
+          return playerId;
+        }
+
+        if (currentPlayer && currentPlayer > currentTopPlayer) {
+          return playerId;
+        }
+
+        return accumulator;
+      },
+      ''
+    );
+
+    const stats: BattleSummaryLogItem = {
+      tankiestPlayer:
+        this.players.find((player) => player.id === playerIdWithMostBlocks) ??
+        null,
+      totalBlocked,
+      totalDamage,
+      totalTurns,
+      type: 'summary',
+      winner: this.winner,
+    };
+
+    this.battleLog.push(stats);
+    console.log(stats);
   }
 
   public performTurn() {
@@ -104,5 +191,6 @@ export class BattleModel implements Battle {
     }
 
     this.checkStatus();
+    this.swapTurns();
   }
 }

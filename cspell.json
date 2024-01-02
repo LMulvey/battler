@@ -1,8 +1,15 @@
 {
   "allowCompoundWords": false,
-  "ignoreRegExpList": ["/.*[0-9].*/"],
+  "ignoreRegExpList": [
+    "/.*[0-9].*/"
+  ],
   "language": "en",
   "minWordLength": 5,
   "version": "0.2",
-  "words": ["battler", "tsconfigs", "rulesdir"]
+  "words": [
+    "battler",
+    "rulesdir",
+    "tankiest",
+    "tsconfigs"
+  ]
 }

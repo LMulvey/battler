@@ -14,6 +14,20 @@ export type BattleAttack = {
 
 export type BattleAction = BattleAttack;
 
+export type BattleSummaryStats = {
+  tankiestPlayer: Player | null;
+  totalBlocked: number;
+  totalDamage: number;
+  totalTurns: number;
+  winner: Player | null;
+};
+
+export type BattleActionLogItem = BattleAction & { type: 'turn' };
+
+export type BattleSummaryLogItem = BattleSummaryStats & { type: 'summary' };
+
+export type BattleLogItem = BattleActionLogItem | BattleSummaryLogItem;
+
 export type BattleHooks = {
   onAction?: (action: BattleAction) => void;
   onPauseBattle?: (battle: Battle) => void;
@@ -22,7 +36,7 @@ export type BattleHooks = {
 };
 
 export type Battle = {
-  battleLog: BattleAction[];
+  battleLog: BattleLogItem[];
   endTime: number;
   id: string;
   players: Player[];
