@@ -1,17 +1,18 @@
 import { v4 } from 'uuid';
 import {
+  type BattleMessageLogItem,
   type BattleActionLogItem,
   type BattleSummaryLogItem,
   type BattleLogItem,
   type BattleHooks,
   type BattleStatus,
-  type Battle,
+  type BattleClass,
   type BattleAction,
   type CreateBattleInput,
 } from '@/types/battle';
 import { type Player } from '@/types/player';
 
-export class BattleModel implements Battle {
+export class Battle implements BattleClass {
   public battleLog: BattleLogItem[];
 
   public endTime: number;
@@ -46,9 +47,31 @@ export class BattleModel implements Battle {
     this.hooks = initialData.hooks ?? {};
     this.winner = null;
 
-    // TODO: determine first player differently
+    // Temporarily assign players to these variables
+    // The actual starting player is determined in #determinePlayerOrder
     this.actingPlayer = this.players[0];
     this.defendingPlayer = this.players[1];
+    this.determinePlayerOrder();
+  }
+
+  private determinePlayerOrder() {
+    const randomIndex = Math.floor(Math.random() * this.players.length);
+
+    for (let index = 0; index < this.players.length; index++) {
+      const player = this.players[index];
+      // This shouldn't happen
+      if (!player) {
+        continue;
+      }
+
+      if (index === randomIndex) {
+        this.actingPlayer = player;
+      } else {
+        this.defendingPlayer = player;
+      }
+    }
+
+    this.logMessage(`${this.actingPlayer.name} goes first.`);
   }
 
   private logAction(action: Pick<BattleAction, 'damage' | 'result'>) {
@@ -59,18 +82,26 @@ export class BattleModel implements Battle {
       ...action,
     };
 
-    console.log(resolvedAction);
     this.battleLog.push(resolvedAction);
     this.hooks.onAction?.(resolvedAction);
   }
 
+  private logMessage(message: string) {
+    const resolvedMessage: BattleMessageLogItem = {
+      message,
+      type: 'message',
+    };
+
+    this.battleLog.push(resolvedMessage);
+  }
+
   private calculateDamage(basePower: number) {
-    const criticalDamageMultiplier = Math.random() * 5;
+    const criticalDamageMultiplier = Math.random() * 8;
     return Math.floor(basePower * criticalDamageMultiplier);
   }
 
-  private calculateDefended(basePower: number) {
-    const chance = Math.floor(basePower * (Math.random() * 20));
+  private determineDefended(basePower: number) {
+    const chance = Math.floor(basePower * (Math.random() * 21));
     return chance % 3 === 0;
   }
 
@@ -119,6 +150,10 @@ export class BattleModel implements Battle {
     return action.type === 'turn';
   }
 
+  public fetchLogSummary() {
+    return this.battleLog.filter((action) => action.type === 'summary');
+  }
+
   private buildStats() {
     const battleLogActions = this.battleLog.filter(
       (action): action is BattleActionLogItem =>
@@ -164,10 +199,17 @@ export class BattleModel implements Battle {
       ''
     );
 
+    const tankiestPlayer = this.players.find(
+      (player) => player.id === playerIdWithMostBlocks
+    );
+
     const stats: BattleSummaryLogItem = {
-      tankiestPlayer:
-        this.players.find((player) => player.id === playerIdWithMostBlocks) ??
-        null,
+      tankiestPlayer: tankiestPlayer
+        ? {
+            player: tankiestPlayer,
+            totalBlocks: blocksByPlayer[playerIdWithMostBlocks] ?? 0,
+          }
+        : null,
       totalBlocked,
       totalDamage,
       totalTurns,
@@ -176,11 +218,10 @@ export class BattleModel implements Battle {
     };
 
     this.battleLog.push(stats);
-    console.log(stats);
   }
 
   public performTurn() {
-    const didDefend = this.calculateDefended(this.defendingPlayer.power);
+    const didDefend = this.determineDefended(this.defendingPlayer.power);
 
     if (didDefend) {
       this.logAction({ damage: 0, result: 'blocked' });

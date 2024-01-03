@@ -13,7 +13,6 @@ src/types/api.ts
 /out/
 *.log
 .*
-.yarn/*
 !/storybook
 /storybook-static
 !.babelrc.js
@@ -37,13 +36,6 @@ src/types/api.ts
 !.storybook
 
 !.vscode
-!.yarn
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
-!.yarnrc.yml
 !.git*
 
 # Sentry

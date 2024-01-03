@@ -15,27 +15,34 @@ export type BattleAttack = {
 export type BattleAction = BattleAttack;
 
 export type BattleSummaryStats = {
-  tankiestPlayer: Player | null;
+  tankiestPlayer: { player: Player; totalBlocks: number } | null;
   totalBlocked: number;
   totalDamage: number;
   totalTurns: number;
   winner: Player | null;
 };
 
+export type BattleMessage = { message: string };
+
+export type BattleMessageLogItem = BattleMessage & { type: 'message' };
+
 export type BattleActionLogItem = BattleAction & { type: 'turn' };
 
 export type BattleSummaryLogItem = BattleSummaryStats & { type: 'summary' };
 
-export type BattleLogItem = BattleActionLogItem | BattleSummaryLogItem;
+export type BattleLogItem =
+  | BattleActionLogItem
+  | BattleMessageLogItem
+  | BattleSummaryLogItem;
 
 export type BattleHooks = {
   onAction?: (action: BattleAction) => void;
-  onPauseBattle?: (battle: Battle) => void;
-  onStartBattle?: (battle: Battle) => void;
-  onStopBattle?: (battle: Battle) => void;
+  onPauseBattle?: (battle: BattleClass) => void;
+  onStartBattle?: (battle: BattleClass) => void;
+  onStopBattle?: (battle: BattleClass) => void;
 };
 
-export type Battle = {
+export type BattleClass = {
   battleLog: BattleLogItem[];
   endTime: number;
   id: string;
@@ -50,6 +57,6 @@ export type CreateBattleInput = {
 };
 
 export type CreateBattlePayload = {
-  battle: Battle;
+  battle: BattleClass;
   errors: Error[];
 };

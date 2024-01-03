@@ -10,7 +10,7 @@ tsc_check () {
     return
   fi
 
-  yarn tsc 2>&1 | sed 's/^/tsc /'
+  pnpm tsc 2>&1 | sed 's/^/tsc /'
 }
 
 tsc_check &

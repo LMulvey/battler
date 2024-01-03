@@ -1,14 +1,9 @@
-import { BattleModel } from '@/models/Battle';
-import { type CreateBattleInput } from '@/types/battle';
+import { type Battle } from '@/models/Battle';
 
-export const runBattle = (input: CreateBattleInput) => {
-  const battle = new BattleModel(input);
-
+export const runBattle = (battle: Battle): void => {
   // start battle
   battle.startBattle();
   while (battle.status !== 'finished') {
     battle.performTurn();
   }
-
-  return battle;
 };

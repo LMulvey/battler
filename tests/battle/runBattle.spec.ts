@@ -1,11 +1,14 @@
 import { createPlayer } from '@/lib/createPlayer';
 import { runBattle } from '@/lib/runBattle';
+import { Battle } from '@/models/Battle';
 
 describe('RunBattle', () => {
   it('runs a valid battle', () => {
     const player1 = createPlayer({ name: 'player1', power: 5 });
     const player2 = createPlayer({ name: 'player2', power: 5 });
-    const battle = runBattle({ players: [player1.player, player2.player] });
+    const battle = new Battle({ players: [player1.player, player2.player] });
+
+    runBattle(battle);
 
     expect(battle.battleLog.length > 0).toBeTruthy();
     expect(battle.winner).toBeDefined();
@@ -18,7 +21,7 @@ describe('RunBattle', () => {
 
     const player1 = createPlayer({ name: 'player1', power: 5 });
     const player2 = createPlayer({ name: 'player2', power: 5 });
-    const battle = runBattle({
+    const battle = new Battle({
       hooks: {
         onAction,
         onStartBattle,
@@ -26,6 +29,8 @@ describe('RunBattle', () => {
       },
       players: [player1.player, player2.player],
     });
+
+    runBattle(battle);
 
     expect(battle.battleLog.length > 0).toBeTruthy();
     expect(onAction).toHaveBeenCalled();
